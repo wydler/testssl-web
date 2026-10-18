@@ -1,0 +1,87 @@
+---
+name: testssl.sh Updates
+
+"on":
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * 1'
+
+# Global environment variable accessible to all jobs and steps
+env:
+  TSS_VERSION_FILE: 'testsslsh.version'
+
+jobs:
+  tag-new-versions:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Read the latest tag from repository testssl.sh
+        id: testsslsh_remote
+        uses: oprypin/find-latest-tag@6957ac556fa6d349727ecabfcaaf9f8e5ee37124  # v1.1.3
+        with:
+          # The repository to scan.
+          repository: testssl/testssl.sh
+          # We know that all relevant tags have a GitHub release for them.
+          releases-only: true
+
+      - name: Read the locally stored version number
+        id: testsslsh_local
+        run: echo "version=$(cat $TSS_VERSION_FILE)" >> $GITHUB_OUTPUT
+
+    outputs:
+      tss_local_version: ${{ steps.testsslsh_local.outputs.version }}
+      tss_original_version: ${{ steps.testsslsh_remote.outputs.tag }}
+
+
+  update-version:
+    needs: tag-new-versions
+    if: ${{ needs.tag-new-versions.outputs.tss_local_version != needs.tag-new-versions.outputs.tss_original_version }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Set globals
+        id: globals
+        shell: bash
+        run: |
+          echo "NOW=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+          echo "TSS_VERSION_FILE=$TSS_VERSION_FILE" >> $GITHUB_OUTPUT
+
+      - name: Checkout this repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Generate app token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        id: generate-token
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Write new version number to file
+        run: echo "${{ needs.tag-new-versions.outputs.tss_original_version }}"  > $TSS_VERSION_FILE
+
+      - name: Create Pull Request for the change
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          commit-message: Bump testssl/testssl.sh in ${{ steps.globals.outputs.TSS_VERSION_FILE }}
+          signoff: false
+          branch: dependabot-testssl-${{ needs.tag-new-versions.outputs.tss_original_version }}
+          delete-branch: true
+          title: 'Bump testssl/testssl.sh from ${{ needs.tag-new-versions.outputs.tss_local_version }} to ${{ needs.tag-new-versions.outputs.tss_original_version }} in ${{ steps.globals.outputs.TSS_VERSION_FILE }}'
+          body: |
+              Bump testssl/testssl.sh from ${{ needs.tag-new-versions.outputs.tss_local_version }} to ${{ needs.tag-new-versions.outputs.tss_original_version }}.
+          #    - Updated with *today's* date
+          labels: |
+            dependencies
+          draft: true
