@@ -103,7 +103,7 @@ jobs:
         id: build
         with:
           context: .
-          file: .build/debian/Dockerfile
+          file: ./build/debian/Dockerfile
           push: true
           build-args: |
             APP_VERSION=${{ steps.tss.outputs.version }}
