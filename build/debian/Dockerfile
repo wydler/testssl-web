@@ -18,7 +18,7 @@ WORKDIR /tmp
 # --no-install-recommends hält das Image klein
 # ----------------------------------------
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     git \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
@@ -31,12 +31,15 @@ RUN apt-get update \
 # - For amd64 builds, use "linux" archive  
 # Then extract the archive to /opt and clean up temporary files.
 # ----------------------------------------
-RUN git init /opt/testssl.sh \
-    && cd /opt/testssl.sh \
-    && git remote add origin https://github.com/testssl/testssl.sh.git \
-    && git fetch --depth 1 origin "refs/tags/${APP_VERSION}:refs/tags/${APP_VERSION}" \
-    && git checkout "refs/tags/${APP_VERSION}" \
-    && rm -rf .git
+RUN set -eux; \
+    test -n "${APP_VERSION}"; \
+    git init /opt/testssl.sh; \
+    cd /opt/testssl.sh; \
+    git remote add origin https://github.com/testssl/testssl.sh.git; \
+    git fetch --depth 1 origin \
+        "refs/tags/${APP_VERSION}:refs/tags/${APP_VERSION}"; \
+    git checkout "refs/tags/${APP_VERSION}"; \
+    rm -rf .git
 
 
 # ----------------------------------------
@@ -51,9 +54,10 @@ ARG DOCKER_IMAGE_VERSION
 
 # ----------------------------------------
 # Setze Umgebungsvariablen
-# LC_ALL/Language für UTF-8 Support
-# JAVAFX_TMP_DIR für JavaFX Cache
-# TERM und S6_KILL_GRACETIME für Baseimage-GUI
+# UWSGI_PROCESSES
+# UWSGI_THREADS
+# TEST_TIMEOUT
+# TESTSSLDEBUG
 # ----------------------------------------
 ENV DEBIAN_FRONTEND=noninteractive \
     UWSGI_PROCESSES=4 \
@@ -79,38 +83,33 @@ LABEL org.opencontainers.image.authors="Daniel Wydler" \
 # ----------------------------------------
 # Runtime dependencies
 # ----------------------------------------
-RUN set -eux; \
-    apt-get update; \
-    apt-get install --yes --no-install-recommends \
-        openssl \
-        net-tools \
-        dnsutils \
-        aha \
-        xxd \
-        python3-pkg-resources \
-        python3-flask \
-        bsdmainutils \
-        procps \
-        nginx-light \
-        uwsgi \
-        uwsgi-plugin-python3 \
-        supervisor \
-        socat; \
-    apt-get clean; \
-    rm -rf /var/lib/apt/lists/* \
-           /var/cache/apt/archives/* \
-           /tmp/* \
-           /var/tmp/*
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    openssl \
+    net-tools \
+    dnsutils \
+    aha \
+    xxd \
+    python3-pkg-resources \
+    python3-flask \
+    bsdmainutils \
+    procps \
+    nginx-light \
+    uwsgi \
+    uwsgi-plugin-python3 \
+    supervisor \
+    socat \
+ && rm -rf /var/lib/apt/lists/*
 
 
 # ----------------------------------------
 # Application files and configuration
 # ----------------------------------------
 COPY --from=builder /opt/testssl.sh /testssl.sh
+
 COPY rootfs /
 
-RUN set -eux; \
-    chmod 0755 /entrypoint.sh
+RUN chmod 0755 /entrypoint.sh
 
 WORKDIR /var/www/html/testssl
 
