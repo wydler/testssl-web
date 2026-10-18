@@ -1,14 +1,15 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TLS/SSL Test Portal</title>
-<link rel="stylesheet" href="../static/bootstrap.min.css">
-<link rel="stylesheet" href="../static/bootstrap-theme.min.css">
-<link rel="stylesheet" href="../static/style.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="content">
-<h1>About | <a href="..">Click for new test</a></h1>
+<main class="container py-4">
+<h1>About <span class="fs-4">| <a href="{{ url_for('main') }}">Click for new test</a></span></h1>
 <div>
 	<p>
 	The Docker Image <a href="https://github.com/shartge/testssl-web">hartge/testssl-web</a> is a fork of <a href="https://github.com/mycloudrevolution/testssl-webfrontend">mycloudrevolution/testssl-webfrontend</a> from Markus Kraus
@@ -23,6 +24,6 @@
 </pre>
 </div>
 <hr>
-</div>
+</main>
 </body>
 </html>

@@ -1,28 +1,8 @@
-.notice {
-    position: relative;
-    bottom: 0px;
-    font-size: small;
-    text-align: center;
-    width: 100%;
-}
-
-.errormsg {
-    background-color: red;
-    padding: 10px;
-}
-
 a {
    color: black;
    text-decoration: underline;
 }
 
-body {
-   margin: 1%;
-}
-
 .progress-style {
     text-align: left;
-}
-.progress {
-    max-width: 66.6666667%;
 }

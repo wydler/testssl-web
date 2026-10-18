@@ -1,20 +1,21 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TLS/SSL Test Portal</title>
-<link rel="stylesheet" href="static/bootstrap.min.css">
-<link rel="stylesheet" href="static/bootstrap-theme.min.css">
-<link rel="stylesheet" href="static/style.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <div class="content">
     {% block content %}{% endblock %}
 </div>
-<h4>
-	<span class="label label-default col-sm-8">
-		This portal uses <a href="https://testssl.sh/">testssl.sh</a>.<br/>
-		<a href="about/">Click here</a> for more information.
-	</span>
-</h4>
+<footer class="container py-3">
+	<p class="mb-0">
+		This portal uses <a href="https://testssl.sh/">testssl.sh</a>.
+		<a href="{{ url_for('about') }}">More information</a>
+	</p>
+</footer>
 </body>
 </html>

@@ -13,24 +13,29 @@
 		document.documentElement.scrollTop = getDocHeight();
 	},100 );
 </script>
-<h1 id="topofpage"><div id="pagetitle">Test running, please wait ...</div><div id="returnlink" style="visibility:hidden">Test done | <a href="">click for new test</a></div></h1>
-<h1 id="result" style="visibility:hidden">Result:</h1>
+<main class="container py-4">
+<h1 id="topofpage">
+    <span id="pagetitle">Test running, please wait ...</span>
+    <span id="returnlink" class="d-none">Test done | <a href="{{ url_for('main') }}">Click for new test</a></span>
+</h1>
+<h2 id="result" class="d-none">Result:</h2>
 {% for message in get_flashed_messages() %}
-<div class="errormsg">{{ message }}</div>
+<div class="alert alert-danger" role="alert">{{ message }}</div>
 {% endfor %}
-<div>
+<div class="overflow-auto">
 <pre>
 {{ result | safe }}
 </pre>
 </div>
 <hr>
-<h3><span class="label label-default col-sm-8"><a href="#topofpage">Back to top</a></span></h3>
+<p><a href="#topofpage">Back to top</a></p>
 <hr>
 <script>
-	document.getElementById("pagetitle").style="display:none";
-	document.getElementById("returnlink").style="";
-	document.getElementById("result").style="";
+	document.getElementById("pagetitle").classList.add("d-none");
+	document.getElementById("returnlink").classList.remove("d-none");
+	document.getElementById("result").classList.remove("d-none");
 	document.documentElement.scrollTop = getDocHeight();
 	clearInterval(scroller);
 </script>
+</main>
 {% endblock %}
