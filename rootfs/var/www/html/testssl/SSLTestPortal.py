@@ -167,7 +167,7 @@ def about():
 
     # Read changelog content from file
     try:
-        with open("/testssl.sh/testssl-changelog.txt", "rb") as changelog_file:
+        with open("/opt/testssl.sh/git-log.txt", "rb") as changelog_file:
             changelog = changelog_file.read()
     except IOError as e:
         changelog = b"\n\n[Error reading changelog: %s]" % str(e).encode('utf-8')

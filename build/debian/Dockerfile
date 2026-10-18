@@ -35,7 +35,8 @@ RUN set -eux; \
     git fetch --depth 1 origin \
         "refs/tags/${APP_VERSION}:refs/tags/${APP_VERSION}"; \
     git checkout "refs/tags/${APP_VERSION}"; \
-    rm -rf .git
+    git log -n 5 > git-log.txt \
+    rm -rf .git bin/openssl.Darwin.x86_64 bin/openssl.FreeBSD.amd64
 
 
 # ----------------------------------------
