@@ -32,7 +32,7 @@ RUN set -eux; \
     git init /opt/testssl.sh; \
     cd /opt/testssl.sh; \
     git remote add origin https://github.com/testssl/testssl.sh.git; \
-    git fetch --depth 1 origin \
+    git fetch --depth 5 origin \
         "refs/tags/${APP_VERSION}:refs/tags/${APP_VERSION}"; \
     git checkout "refs/tags/${APP_VERSION}"; \
     git log -n 5 > git-log.txt; \
