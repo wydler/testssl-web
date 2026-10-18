@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TLS/SSL Test Portal</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <div class="content">
     {% block content %}{% endblock %}
 </div>
-<footer class="container py-3">
+<footer class="bg-secondary text-white text-center rounded mx-2 my-3 py-1">
 	<p class="mb-0">
 		This portal uses <a href="https://testssl.sh/">testssl.sh</a>.
 		<a href="{{ url_for('about') }}">More information</a>
