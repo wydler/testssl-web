@@ -32,17 +32,20 @@
 		stopAutoScroll();
 		document.getElementById("pagetitle").textContent = "Test aborted";
 		document.getElementById("new-test").classList.remove("d-none");
-		window.stop();
+		setTimeout(function() {
+			window.stop();
+		}, 100);
 	}
 
-	window.addEventListener("keydown", function(event) {
+	document.addEventListener("keydown", function(event) {
 		if (event.key === "Escape") {
 			event.preventDefault();
+			event.stopPropagation();
 			abortTest();
 		} else if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) {
 			stopAutoScroll();
 		}
-	});
+	}, true);
 	window.addEventListener("wheel", stopAutoScroll, { passive: true });
 	window.addEventListener("touchstart", stopAutoScroll, { passive: true });
 	window.addEventListener("pointerdown", stopAutoScroll);
