@@ -9,21 +9,44 @@
 			Math.max(D.body.clientHeight, D.documentElement.clientHeight)
 		);
 	}
-	var scroller = setInterval(function() {	
+	var autoScroll = true;
+	var scroller = setInterval(function() {
 		document.documentElement.scrollTop = getDocHeight();
 	},100 );
-	window.addEventListener("keydown", function(event) {
-		if (event.key === "Escape") {
-			document.getElementById("pagetitle").textContent = "Test aborted";
-			document.getElementById("new-test").classList.remove("d-none");
-		}
-	});
 </script>
 <main class="container-fluid py-4">
 <h1 id="topofpage" class="d-flex justify-content-between align-items-center gap-3">
     <span id="pagetitle">Test running, please wait ...</span>
     <a id="new-test" class="btn btn-primary btn-sm d-none" href="{{ url_for('main') }}">Start a new test</a>
 </h1>
+<script>
+	function stopAutoScroll() {
+		autoScroll = false;
+		if (scroller !== null && scroller !== undefined) {
+			clearInterval(scroller);
+			scroller = null;
+		}
+	}
+
+	function abortTest() {
+		stopAutoScroll();
+		document.getElementById("pagetitle").textContent = "Test aborted";
+		document.getElementById("new-test").classList.remove("d-none");
+		window.stop();
+	}
+
+	window.addEventListener("keydown", function(event) {
+		if (event.key === "Escape") {
+			event.preventDefault();
+			abortTest();
+		} else if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) {
+			stopAutoScroll();
+		}
+	});
+	window.addEventListener("wheel", stopAutoScroll, { passive: true });
+	window.addEventListener("touchstart", stopAutoScroll, { passive: true });
+	window.addEventListener("pointerdown", stopAutoScroll);
+</script>
 <h2 id="result" class="d-none">Result:</h2>
 {% for message in get_flashed_messages() %}
 <div class="alert alert-danger" role="alert">{{ message }}</div>
@@ -40,8 +63,11 @@
 	document.getElementById("pagetitle").classList.add("d-none");
 	document.getElementById("new-test").classList.remove("d-none");
 	document.getElementById("result").classList.remove("d-none");
-	document.documentElement.scrollTop = getDocHeight();
+	if (autoScroll) {
+		document.documentElement.scrollTop = getDocHeight();
+	}
 	clearInterval(scroller);
+	scroller = null;
 </script>
 </main>
 {% endblock %}
