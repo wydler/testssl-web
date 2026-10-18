@@ -24,12 +24,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 
- # ----------------------------------------
-# Create /opt/MediathekView directory and download the correct MediathekView archive
-# based on the build target architecture (TARGETARCH).  
-# - For arm64 builds, use "linux-aarch64" archive  
-# - For amd64 builds, use "linux" archive  
-# Then extract the archive to /opt and clean up temporary files.
+# ----------------------------------------
+# Create /opt/testssl.sh directory and download the latest testssl.sh release
 # ----------------------------------------
 RUN set -eux; \
     test -n "${APP_VERSION}"; \
@@ -54,13 +50,12 @@ ARG DOCKER_IMAGE_VERSION
 
 # ----------------------------------------
 # Setze Umgebungsvariablen
-# UWSGI_PROCESSES
-# UWSGI_THREADS
-# TEST_TIMEOUT
-# TESTSSLDEBUG
+# UWSGI_PROCESSES   Number of uWSGI processes: amount of max. parallel running SSL checks
+# UWSGI_THREADS     Number of uWSGI threads: amount of max. parallel running SSL checks
+# TEST_TIMEOUT      Set the timeout for the portal site (default 300 seconds)
+# TESTSSLDEBUG      Enable debugging for testssl.sh by setting this variable to a higher value
 # ----------------------------------------
-ENV DEBIAN_FRONTEND=noninteractive \
-    UWSGI_PROCESSES=4 \
+ENV UWSGI_PROCESSES=4 \
     UWSGI_THREADS=2 \
     TEST_TIMEOUT=300 \
     TESTSSLDEBUG=0
