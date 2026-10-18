@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from flask import Flask, Response, request, redirect, session, render_template, url_for, flash, stream_with_context
+from flask import Flask, Response, request, render_template, flash, stream_with_context
 
 try:
     from markupsafe import escape
@@ -21,7 +21,10 @@ except ImportError:
 
 import os
 from os import urandom
-from subprocess import Popen, PIPE, CalledProcessError, TimeoutExpired
+import selectors
+import signal
+import subprocess
+import time
 import re
 import socket
 
@@ -42,130 +45,237 @@ scantypes = ["certonly", "normal", "full"]
 reHost = re.compile(r"^[a-zA-Z0-9_][a-zA-Z0-9_\-]+(\.[a-zA-Z0-9_\-]+)*$")
 preflightRequest = True
 preflightTimeout = 10
-application.debug = False
-application.secret_key = urandom(32)
+application.secret_key = os.environ.get("SECRET_KEY") or urandom(32)
 #####################
+
+
+def terminate_process(process):
+    if process is None:
+        return
+
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+
+    if process.poll() is None:
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+
+    if process.poll() is None:
+        process.wait()
+
+
+def render_line(line):
+    renderer = None
+    try:
+        renderer = subprocess.Popen(
+            [rendererCmd, *rendererArgs],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+        )
+        html, err = renderer.communicate(input=line, timeout=rendererTimeout)
+    except OSError as error:
+        return None, f"Unable to start HTML formatter: {error}"
+    except subprocess.TimeoutExpired:
+        terminate_process(renderer)
+        _, err = renderer.communicate()
+        message = "HTML formatting timed out"
+        if err:
+            message += ": " + err.decode("utf-8", errors="replace")
+        return None, message
+    finally:
+        terminate_process(renderer)
+
+    if renderer.returncode != 0:
+        message = f"HTML formatting failed with error code {renderer.returncode}"
+        if err:
+            message += ": " + err.decode("utf-8", errors="replace")
+        return None, message
+
+    return html, None
+
 
 @application.route("/", methods=['GET', 'POST'])
 def main():
-
-    if request.method == 'GET':                         # Main Page
+    if request.method == 'GET':
         return render_template("main.html")
-    elif request.method == 'POST':                      # Perform Test
-        # Sanity checks of request values
-        ok = True
-        host = request.form['host']
-        if not reHost.match(host):
-            flash("Wrong host name!")
-            ok = False
-        if host == "localhost" or host.find("127.") == 0 or host == "::1":
-            flash("I was already pentested ;)")
-            ok = False
 
+    invalid = False
+    host = request.form.get('host', '').strip()
+    if not reHost.fullmatch(host):
+        flash("Wrong host name!")
+        invalid = True
+
+    if host == "localhost" or host.startswith("127.") or host == "::1":
+        flash("I was already pentested ;)")
+        invalid = True
+
+    try:
+        port = int(request.form.get('port', ''))
+    except ValueError:
+        flash("Port number must be numeric")
+        port = None
+        invalid = True
+
+    if port is not None and not 0 <= port <= 65535:
+        flash("Wrong port number!")
+        port = None
+        invalid = True
+
+    scantype = request.form.get('scantype', '')
+    if scantype not in scantypes:
+        flash("Wrong scantype!")
+        invalid = True
+
+    starttls = request.form.get('starttls') == "yes"
+    protocol = request.form.get('protocol', '')
+    if starttls and protocol not in protocols:
+        flash("Wrong protocol!")
+        invalid = True
+
+    if request.form.get('confirm') != "yes":
+        flash("You must confirm that you are authorized to scan the given system!")
+        invalid = True
+
+    if invalid:
+        return render_template("main.html")
+
+    if preflightRequest:
         try:
-            port = int(request.form['port'])
-            if not (port >= 0 and port <= 65535):
-                flash("Wrong port number!")
-                ok = False
-        except:
-            flash("Port number must be numeric")
-            ok = False
-
-        scantype = request.form['scantype']
-        if scantype not in scantypes:
-            flash("Wrong scantype!")
-            ok = False
-
-        if 'starttls' in request.form and request.form['starttls'] == "yes":
-            starttls = True
-        else:
-            starttls = False
-
-        protocol = request.form['protocol']
-        if starttls and protocol not in protocols:
-            flash("Wrong protocol!")
-            ok = False
-
-        if not ('confirm' in request.form and request.form['confirm'] == "yes"):
-            flash("You must confirm that you are authorized to scan the given system!")
-            ok = False
-
-        # Perform preflight request to prevent that testssl.sh runs into long timeout
-        if ok and preflightRequest:
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(preflightTimeout)
-                s.connect((host, port))
-                s.close()
-            except:
-                flash("Connection failed!")
-                ok = False
-
-        if not ok:
+            with socket.create_connection((host, port), timeout=preflightTimeout):
+                pass
+        except OSError:
+            flash("Connection failed!")
             return render_template("main.html")
 
-        # Build command line
-        testssl_args = [checkCmd]
-        testssl_args += checkArgs
+    testssl_args = [checkCmd, *checkArgs, "--debug=" + str(testsslDebug)]
 
-        testssl_args.append("--debug="+str(testsslDebug))
+    if scantype == "normal":
+        testssl_args.append("--ids-friendly")
+    elif scantype == "certonly":
+        testssl_args.append("--server-defaults")
 
-        if scantype == "normal":
-            testssl_args.append("--ids-friendly")
+    if starttls:
+        testssl_args.extend(["-t", protocol])
+    testssl_args.append(host + ":" + str(port))
 
-        if scantype == "certonly":
-            testssl_args.append("--server-defaults")
+    def runtest():
+        first, _, last = render_template('result.html', result=SENTINEL).partition(SENTINEL)
+        yield first
+        check = None
+        selector = selectors.DefaultSelector()
+        stderr_output = bytearray()
+        stderr_limit = 65536
+        stderr_truncated = False
+        pending_line = bytearray()
+        timed_out = False
+        deadline = time.monotonic() + checkTimeout
 
-        # if scantype is "full"
-        # nothing is to be done
+        try:
+            try:
+                check = subprocess.Popen(
+                    testssl_args,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True,
+                )
+            except OSError as error:
+                yield f"<pre>{escape(f'Unable to start testssl.sh: {error}')}</pre>"
+                yield last
+                return
 
-        if starttls:
-            testssl_args.append("-t")
-            testssl_args.append(protocol)
-        testssl_args.append(host + ":" + str(port))
+            selector.register(check.stdout, selectors.EVENT_READ, "stdout")
+            selector.register(check.stderr, selectors.EVENT_READ, "stderr")
 
+            while selector.get_map():
+                if not timed_out and time.monotonic() >= deadline:
+                    timed_out = True
+                    terminate_process(check)
 
-        # Build render command line
-        render_args = [rendererCmd]
-        render_args += rendererArgs
+                timeout = None if timed_out else max(0, deadline - time.monotonic())
+                for key, _ in selector.select(timeout):
+                    chunk = os.read(key.fd, 65536)
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        key.fileobj.close()
+                        continue
 
-        # Perform test
+                    if key.data == "stderr":
+                        remaining = stderr_limit - len(stderr_output)
+                        if remaining > 0:
+                            stderr_output.extend(chunk[:remaining])
+                        if len(chunk) > remaining:
+                            stderr_truncated = True
+                        continue
 
-        def runtest():
-            first, _, last = render_template('result.html', result=SENTINEL).partition(SENTINEL)
-            yield first
-            check = Popen(testssl_args, shell=False, stdout=PIPE, stderr=PIPE)
-            for line in iter(check.stdout.readline, b''):
-                renderer = Popen(render_args, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                html, err = renderer.communicate(input=line)
-                if renderer.returncode != 0:
-                    html = "<pre>HTML formatting failed with error code " + str(renderer.returncode) + " - see raw output below</pre>"
-                    html += "<pre>" + str(err, 'utf-8') + "</pre>"
-                    yield str(html, 'utf-8')
-                    break
-                yield str(html, 'utf-8')
-            output, err = check.communicate(timeout=checkTimeout)
-            if check.returncode > 128:
-                yield str(err, 'utf-8')
+                    pending_line.extend(chunk)
+                    while b'\n' in pending_line:
+                        line, _, rest = pending_line.partition(b'\n')
+                        pending_line = bytearray(rest)
+                        html, error = render_line(line + b'\n')
+                        if error:
+                            yield f"<pre>{escape(error)}</pre>"
+                            terminate_process(check)
+                            yield last
+                            return
+                        yield html.decode("utf-8", errors="replace")
+
+            if pending_line:
+                html, error = render_line(pending_line)
+                if error:
+                    yield f"<pre>{escape(error)}</pre>"
+                    terminate_process(check)
+                    yield last
+                    return
+                yield html.decode("utf-8", errors="replace")
+
+            try:
+                returncode = check.wait(timeout=max(0, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                terminate_process(check)
+                returncode = check.wait()
+
+            if timed_out:
+                yield f"<pre>{escape(f'Test timed out after {checkTimeout} seconds.')}</pre>"
+            elif returncode != 0:
+                error = stderr_output.decode("utf-8", errors="replace").strip()
+                if stderr_truncated:
+                    error += "\n[stderr output truncated]"
+                if not error:
+                    error = f"testssl.sh exited with status {returncode}"
+                yield f"<pre>{escape(error)}</pre>"
+
             yield last
-            check.kill()
-            renderer.kill()
+        finally:
+            selector.close()
+            terminate_process(check)
+            if check is not None:
+                for stream in (check.stdout, check.stderr):
+                    if stream is not None and not stream.closed:
+                        stream.close()
 
-        return Response(stream_with_context(runtest()), mimetype='text/html')
-
+    return Response(stream_with_context(runtest()), mimetype='text/html')
 
 @application.route("/about/")
 def about():
-    # Build commmands
-    testssl_args = [checkCmd]
-    testssl_args.append("--version")
-    render_args = [rendererCmd]
-    render_args += rendererArgs
-    # Get version output from testssl
-    check = Popen(testssl_args, shell=False, stdout=PIPE, stderr=PIPE)
-    output, err = check.communicate()
+    check = subprocess.run(
+        [checkCmd, "--version"],
+        capture_output=True,
+        check=True,
+        timeout=checkTimeout,
+    )
 
-    # Read changelog content from file
     try:
         with open("/opt/testssl.sh/git-log.txt", "rb") as changelog_file:
             changelog = changelog_file.read()
@@ -173,14 +283,18 @@ def about():
         changelog = b"\n\n[Error reading changelog: %s]" % str(e).encode('utf-8')
 
     # Append changelog to output
-    full_output = output + b"\nCommit log testssl.sh:\n\n" + changelog
-
-    # Render output as HTML
-    renderer = Popen(render_args, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    html, err = renderer.communicate(input=full_output)
-    check.kill()
-    renderer.kill()
-    return render_template("about.html", about=str(html, 'utf-8'))
+    full_output = check.stdout + b"\nCommit log testssl.sh:\n\n" + changelog
+    renderer = subprocess.run(
+        [rendererCmd, *rendererArgs],
+        input=full_output,
+        capture_output=True,
+        check=True,
+        timeout=rendererTimeout,
+    )
+    return render_template(
+        "about.html",
+        about=renderer.stdout.decode("utf-8", errors="replace"),
+    )
 
 if __name__ == "__main__":
     application.run(host='0.0.0.0')

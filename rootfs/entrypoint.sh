@@ -18,6 +18,7 @@ if (( TEST_TIMEOUT > 3600 )); then
 fi
 
 export CHECKTIMEOUT="${TEST_TIMEOUT}"
+export SECRET_KEY="${SECRET_KEY:-$(openssl rand -hex 32)}"
 UWSGI_READ_TIMEOUT=$(( TEST_TIMEOUT + 10 ))
 
 # ----------------------------------------
