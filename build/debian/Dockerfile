@@ -105,7 +105,7 @@ RUN apt-get update \
 # ----------------------------------------
 # Application files and configuration
 # ----------------------------------------
-COPY --from=builder /opt/testssl.sh /testssl.sh
+COPY --from=builder /opt/testssl.sh /opt/testssl.sh
 
 COPY rootfs /
 
