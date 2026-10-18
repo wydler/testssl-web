@@ -13,7 +13,7 @@
 		document.documentElement.scrollTop = getDocHeight();
 	},100 );
 </script>
-<main class="container py-4">
+<main class="container-fluid py-4">
 <h1 id="topofpage">
     <span id="pagetitle">Test running, please wait ...</span>
     <span id="returnlink" class="d-none">Test done | <a href="{{ url_for('main') }}">Click for new test</a></span>
@@ -22,11 +22,9 @@
 {% for message in get_flashed_messages() %}
 <div class="alert alert-danger" role="alert">{{ message }}</div>
 {% endfor %}
-<div class="overflow-auto">
 <pre>
 {{ result | safe }}
 </pre>
-</div>
 <hr>
 <p><a href="#topofpage">Back to top</a></p>
 <hr>
