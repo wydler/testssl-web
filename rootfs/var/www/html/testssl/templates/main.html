@@ -31,14 +31,14 @@ function progressContinue() {
 
     <div class="row mb-3">
         <label for="host" class="col-md-5 col-form-label text-md-end">Hostname/IP:</label>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <input type="text" name="host" id="host" class="form-control" />
         </div>
     </div>
 
     <div class="row mb-3">
         <label for="port" class="col-md-5 col-form-label text-md-end">Port:</label>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <input type="number" name="port" id="port" min="0" max="65535" value="443" class="form-control" />
         </div>
     </div>
@@ -63,7 +63,7 @@ function progressContinue() {
 
     <div class="row mb-3">
         <label for="starttls" class="col-md-5 col-form-label text-md-end">Use STARTTLS:</label>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="form-check mb-2">
                 <input type="checkbox" class="form-check-input" name="starttls" id="starttls" value="yes">
                 <label class="form-check-label" for="starttls">Enable STARTTLS</label>
@@ -99,7 +99,7 @@ function progressContinue() {
     </div>
 </form>
 <div class="row">
-    <div class="col-md-5 offset-md-5">
+    <div class="col-md-2 offset-md-5">
         <div id="progress" class="progress" role="progressbar" aria-label="Scan progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
             <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
         </div>
