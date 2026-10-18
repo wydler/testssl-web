@@ -109,7 +109,7 @@ jobs:
           commit-message: >-
             chore(deps): Update testssl/testssl.sh to
             ${{ needs.tag-new-versions.outputs.tss_original_version }}
-          title: >-s
+          title: >-
             chore(deps): Update testssl/testssl.sh from
             ${{ needs.tag-new-versions.outputs.tss_local_version }} to
             ${{ needs.tag-new-versions.outputs.tss_original_version }}
