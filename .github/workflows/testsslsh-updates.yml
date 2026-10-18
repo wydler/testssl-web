@@ -107,16 +107,14 @@ jobs:
           branch: chore/update-testsslsh
           delete-branch: true
           commit-message: >-
-            chore(deps): update testssl.sh to
+            chore(deps): Update testssl/testssl.sh to
             ${{ needs.tag-new-versions.outputs.tss_original_version }}
-          title: >-
-            chore(deps): update testssl.sh from
+          title: >-s
+            chore(deps): Update testssl/testssl.sh from
             ${{ needs.tag-new-versions.outputs.tss_local_version }} to
             ${{ needs.tag-new-versions.outputs.tss_original_version }}
           body: |
-            Updates `testssl.sh` from
-            `${{ needs.tag-new-versions.outputs.tss_local_version }}` to
-            `${{ needs.tag-new-versions.outputs.tss_original_version }}`.
+            Updates `testssl.sh` from `${{ needs.tag-new-versions.outputs.tss_local_version }}` to `${{ needs.tag-new-versions.outputs.tss_original_version }}`.
 
             Upstream: https://github.com/testssl/testssl.sh
           labels: |
