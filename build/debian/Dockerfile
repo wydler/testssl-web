@@ -3,6 +3,7 @@
 # ----------------------------------------
 FROM debian:trixie-slim AS builder
 
+
 # ----------------------------------------
 # Build-Argument
 # ----------------------------------------
@@ -48,6 +49,7 @@ FROM debian:trixie-slim
 ARG APP_VERSION
 ARG DOCKER_IMAGE_VERSION
 
+
 # ----------------------------------------
 # Setze Umgebungsvariablen
 # LC_ALL/Language für UTF-8 Support
@@ -60,18 +62,20 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TEST_TIMEOUT=300 \
     TESTSSLDEBUG=0
 
+
 # ----------------------------------------
 # Metadata / Labels
 # ----------------------------------------
 LABEL org.opencontainers.image.authors="Daniel Wydler" \
       org.opencontainers.image.description="Web frontend for testssl.sh." \
-      org.opencontainers.image.documentation="https://github.com/wydler/MediathekView-Docker/blob/master/README.md" \
-      org.opencontainers.image.source="https://github.com/wydler/MediathekView-Docker" \
-      org.opencontainers.image.title="wydler/mediathekview" \
-      org.opencontainers.image.url="https://hub.docker.com/r/wydler/mediathekview" \
+      org.opencontainers.image.documentation="https://github.com/wydler//testsslsh-gui/blob/master/README.md" \
+      org.opencontainers.image.source="https://github.com/wydler/testsslsh-gui" \
+      org.opencontainers.image.title="wydler//testsslsh-gui" \
+      org.opencontainers.image.url="https://hub.docker.com/r/wydler//testsslsh-gui" \
       org.opencontainers.image.version="${DOCKER_IMAGE_VERSION}" \
       org.opencontainers.image.base.name="debian:trixie-slim" \
       org.opencontainers.image.testssl.version="${APP_VERSION}"
+
 
 # ----------------------------------------
 # Runtime dependencies
@@ -99,6 +103,7 @@ RUN set -eux; \
            /tmp/* \
            /var/tmp/*
 
+
 # ----------------------------------------
 # Application files and configuration
 # ----------------------------------------
@@ -108,7 +113,7 @@ COPY rootfs /
 RUN set -eux; \
     chmod 0755 /entrypoint.sh
 
-WORKDIR /testssl
+WORKDIR /var/www/html/testssl
 
 EXPOSE 5000
 

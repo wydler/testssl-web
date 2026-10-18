@@ -6,7 +6,7 @@ server {
   listen 5000;
 
   location ~ \.(css|js|map) {
-	root /testssl/;
+	root /var/www/html/testssl/;
   }
 
   location = /favicon.ico {
