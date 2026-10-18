@@ -75,7 +75,7 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           commit-message: Bump testssl/testssl.sh in ${{ steps.globals.outputs.TSS_VERSION_FILE }}
-          signoff: false
+          signoff: true
           branch: renovate/apps/testssl-${{ needs.tag-new-versions.outputs.tss_original_version }}
           delete-branch: true
           title: 'Bump testssl/testssl.sh from ${{ needs.tag-new-versions.outputs.tss_local_version }} to ${{ needs.tag-new-versions.outputs.tss_original_version }} in ${{ steps.globals.outputs.TSS_VERSION_FILE }}'
