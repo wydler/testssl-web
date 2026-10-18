@@ -19,7 +19,6 @@ WORKDIR /tmp
 # ----------------------------------------
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    wget \
     git \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
@@ -64,14 +63,14 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 
 # ----------------------------------------
-# Metadata / Labels
+# OCI image metadata
 # ----------------------------------------
 LABEL org.opencontainers.image.authors="Daniel Wydler" \
       org.opencontainers.image.description="Web frontend for testssl.sh." \
-      org.opencontainers.image.documentation="https://github.com/wydler//testsslsh-gui/blob/master/README.md" \
+      org.opencontainers.image.documentation="https://github.com/wydler/testsslsh-gui/blob/master/README.md" \
       org.opencontainers.image.source="https://github.com/wydler/testsslsh-gui" \
       org.opencontainers.image.title="wydler//testsslsh-gui" \
-      org.opencontainers.image.url="https://hub.docker.com/r/wydler//testsslsh-gui" \
+      org.opencontainers.image.url="https://hub.docker.com/r/wydler/testsslsh-gui" \
       org.opencontainers.image.version="${DOCKER_IMAGE_VERSION}" \
       org.opencontainers.image.base.name="debian:trixie-slim" \
       org.opencontainers.image.testssl.version="${APP_VERSION}"
