@@ -22,9 +22,9 @@
 {% for message in get_flashed_messages() %}
 <div class="alert alert-danger" role="alert">{{ message }}</div>
 {% endfor %}
-<pre>
+<div class="bg-body-secondary border rounded p-3 text-start w-100">
 {{ result | safe }}
-</pre>
+</div>
 <hr>
 <p><a href="#topofpage">Back to top</a></p>
 <hr>
