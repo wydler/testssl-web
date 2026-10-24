@@ -50,6 +50,7 @@ RUN apk add --no-cache \
     aha \
     bash \
     bind-tools \
+    coreutils \
     net-tools \
     nginx \
     openssl \
