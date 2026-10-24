@@ -64,7 +64,7 @@ RUN apk add --no-cache \
     util-linux-misc \
     xxd \
  # && addgroup -S www-data \
- # && adduser -S -D -H -G www-data www-data \
+ && adduser -S -D -H -G www-data www-data \
  && mkdir -p /etc/nginx/sites-enabled
 
 COPY --from=builder /opt/testssl.sh /opt/testssl.sh
