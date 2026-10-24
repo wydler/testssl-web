@@ -62,7 +62,7 @@ RUN apk add --no-cache \
     uwsgi \
     uwsgi-python3 \
     util-linux-misc \
-    xxd \
+    xxd
  # && addgroup -S www-data \
  # && adduser -S -D -H -G www-data www-data \
  # && mkdir -p /etc/nginx/sites-enabled
