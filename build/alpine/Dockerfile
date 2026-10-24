@@ -3,14 +3,23 @@
 # ----------------------------------------
 FROM alpine:3.22 AS builder
 
+# Build-Argument
 ARG APP_VERSION
 
+# Setze Arbeitsverzeichnis für temporäre Dateien
 WORKDIR /tmp
 
+# ----------------------------------------
+# Installiere wget und ca-certificates für HTTPS-Download
+# --no-install-recommends hält das Image klein
+# ----------------------------------------
 RUN apk add --no-cache \
     ca-certificates \
     git
 
+# ----------------------------------------
+# Create /opt/testssl.sh directory and download the latest testssl.sh release
+# ----------------------------------------
 RUN set -eux; \
     test -n "${APP_VERSION}"; \
     git init /opt/testssl.sh; \
@@ -28,14 +37,25 @@ RUN set -eux; \
 # ----------------------------------------
 FROM alpine:3.22
 
+# Build-Argument
 ARG APP_VERSION
 ARG DOCKER_IMAGE_VERSION
 
+# ----------------------------------------
+# Setze Umgebungsvariablen
+# UWSGI_PROCESSES   Number of uWSGI processes: amount of max. parallel running SSL checks
+# UWSGI_THREADS     Number of uWSGI threads: amount of max. parallel running SSL checks
+# TEST_TIMEOUT      Set the timeout for the portal site (default 300 seconds)
+# TESTSSLDEBUG      Enable debugging for testssl.sh by setting this variable to a higher value
+# ----------------------------------------
 ENV UWSGI_PROCESSES=4 \
     UWSGI_THREADS=2 \
     TEST_TIMEOUT=300 \
     TESTSSLDEBUG=0
 
+# ----------------------------------------
+# OCI image metadata
+# ----------------------------------------    
 LABEL org.opencontainers.image.authors="Daniel Wydler" \
       org.opencontainers.image.description="Web frontend for testssl.sh." \
       org.opencontainers.image.documentation="https://github.com/wydler/testsslsh-gui/blob/master/README.md" \
@@ -46,6 +66,9 @@ LABEL org.opencontainers.image.authors="Daniel Wydler" \
       org.opencontainers.image.base.name="alpine:3.22" \
       org.opencontainers.image.testssl.version="${APP_VERSION}"
 
+# ----------------------------------------
+# Runtime dependencies
+# ----------------------------------------      
 RUN apk add --no-cache \
     aha \
     bash \
@@ -64,10 +87,12 @@ RUN apk add --no-cache \
     uwsgi-python3 \
     util-linux-misc \
     xxd \
- # && addgroup -S www-data \
  && adduser -S -D -H -G www-data www-data \
  && mkdir -p /etc/nginx/sites-enabled
 
+# ----------------------------------------
+# Application files and configuration
+# ----------------------------------------
 COPY --from=builder /opt/testssl.sh /opt/testssl.sh
 
 COPY rootfs /
