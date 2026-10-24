@@ -1,7 +1,7 @@
 # ----------------------------------------
 # Stage 1: Build / Download testssl.sh
 # ----------------------------------------
-FROM alpine:3.22 AS builder
+FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS builder
 
 # Build-Argument
 ARG APP_VERSION
@@ -35,7 +35,7 @@ RUN set -eux; \
 # ----------------------------------------
 # Stage 2: Runtime
 # ----------------------------------------
-FROM alpine:3.22
+FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 
 # Build-Argument
 ARG APP_VERSION
